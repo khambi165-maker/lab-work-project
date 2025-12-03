@@ -1,0 +1,723 @@
+doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>RealEstateX — Demo</title>
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+<style>
+  :root{
+    --bg:#f7f8fb; --card:#ffffff; --accent:#ff6b35; --muted:#7d8893;
+    --glass: rgba(255,255,255,0.6);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#fbfdff 0%,var(--bg) 100%);color:#111;min-height:100vh}
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:transparent}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo {width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#ff9a66);display:inline-flex;align-items:center;justify-content:center;color:white;font-weight:700}
+  nav{display:flex;gap:12px;align-items:center}
+  .btn{background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(0,0,0,0.06)}
+  main{padding:16px 24px 80px}
+  .hero{display:grid;grid-template-columns:1fr 420px;gap:24px;align-items:start;margin:12px 0}
+  .hero-card{background:var(--card);padding:20px;border-radius:14px;box-shadow:0 6px 20px rgba(20,30,60,0.06)}
+  .search-row{display:flex;gap:8px}
+  input, select, textarea{padding:12px 12px;border-radius:10px;border:1px solid #e6e9ee;min-width:0}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{padding:6px 10px;border-radius:999px;border:1px solid #eee;background:white;color:var(--muted);cursor:pointer}
+  .layout{display:flex;gap:16px;margin-top:18px}
+  .sidebar{width:260px;display:flex;flex-direction:column;gap:12px}
+  .content{flex:1}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .card{background:var(--card);border-radius:12px;padding:10px;box-shadow:0 6px 18px rgba(15,25,40,0.04);display:flex;flex-direction:column;gap:10px}
+  .thumb{height:150px;border-radius:10px;background-size:cover;background-position:center}
+  .hgroup{display:flex;justify-content:space-between;align-items:center}
+  .meta{font-size:13px;color:var(--muted)}
+  .price{font-weight:700;color:var(--accent)}
+  .row{display:flex;gap:8px;align-items:center}
+  footer{padding:28px 24px;color:var(--muted);text-align:center}
+  /* Modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(8,12,20,0.45);display:none;align-items:center;justify-content:center;z-index:90}
+  .modal{width:940px;max-width:96%;background:var(--card);border-radius:12px;padding:18px;box-shadow:0 24px 50px rgba(10,20,40,0.4)}
+  .modal .content{display:flex;gap:12px}
+  .map{height:320px;border-radius:8px;background:#e9eef6;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+  /* small screens */
+  @media (max-width:880px){
+    .hero{grid-template-columns:1fr;gap:12px}
+    .layout{flex-direction:column}
+    .sidebar{width:100%}
+    header{padding:12px}
+  }
+  /* tiny helpers */
+  .muted{color:var(--muted)}
+  .pill{padding:6px 10px;border-radius:10px;background:rgba(0,0,0,0.04);font-size:13px}
+  .fav{margin-left:auto;cursor:pointer;border:0;background:transparent}
+  .hidden{display:none}
+  .small{font-size:13px}
+  .form-row{display:flex;gap:8px}
+  .property-actions{display:flex;gap:8px;margin-top:auto}
+  .navlink{background:transparent;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .badge{background:#ffe9e0;color:#7b2b0b;padding:6px 8px;border-radius:999px;font-weight:700}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">RE</div>
+    <div>
+      <div style="font-weight:700">RealEstateX</div>
+      <div style="font-size:12px;color:var(--muted)">Find, visit & book</div>
+    </div>
+  </div>
+
+  <nav id="nav">
+    <input id="globalSearch" placeholder="Search city or project" style="padding:8px 10px;border-radius:8px;border:1px solid #e7eaf0" />
+    <button class="navlink" onclick="showListings('all')">Listings</button>
+    <button class="navlink" onclick="openModal('myProfile')">Profile</button>
+    <button class="btn" id="authBtn">Sign In</button>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-card">
+      <h2>Find your next home</h2>
+      <p class="muted">Search houses, apartments, PGs & plots — curated listings from trusted partners.</p>
+
+      <div style="margin-top:12px;">
+        <div class="search-row">
+          <input id="qCity" placeholder="City, locality or ZIP" />
+          <select id="qType">
+            <option value="any">Any type</option>
+            <option value="apartment">Apartment</option>
+            <option value="house">House</option>
+            <option value="pg">Hostel/PG</option>
+            <option value="plot">Plot</option>
+          </select>
+          <input id="qBudget" placeholder="Max price (₹)" />
+          <button class="btn" onclick="applySearch()">Search</button>
+        </div>
+
+        <div class="filters">
+          <div class="chip" onclick="toggleFilter('1bhk')">1 BHK</div>
+          <div class="chip" onclick="toggleFilter('2bhk')">2 BHK</div>
+          <div class="chip" onclick="toggleFilter('furnished')">Furnished</div>
+          <div class="chip" onclick="toggleFilter('parking')">Parking</div>
+          <div class="chip" onclick="toggleFilter('pet')">Pet Friendly</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <div class="pill">Instant Booking</div>
+        <div class="pill">Verified</div>
+        <div class="pill">Free cancellation</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="hero-card">
+        <h3>Saved searches</h3>
+        <div class="muted small">No saved searches yet — create one after you sign in.</div>
+      </div>
+      <div class="hero-card">
+        <h3>Quick filters</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="chip" onclick="applyQuick('nearby')">Nearby</button>
+          <button class="chip" onclick="applyQuick('budget-low')">Budget: Low</button>
+          <button class="chip" onclick="applyQuick('premium')">Premium</button>
+          <button class="chip" onclick="applyQuick('instant')">Instant Book</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="layout">
+    <aside class="sidebar">
+      <div class="hero-card">
+        <h4>Filters</h4>
+        <label class="small">Property type
+          <select id="fType">
+            <option value="">Any</option><option>apartment</option><option>house</option><option>pg</option>
+          </select>
+        </label>
+
+        <label class="small">Min beds
+          <select id="fBeds">
+            <option value="">Any</option><option>1</option><option>2</option><option>3</option>
+          </select>
+        </label>
+
+        <label class="small">Min baths
+          <select id="fBaths"><option value="">Any</option><option>1</option><option>2</option></select>
+        </label>
+
+        <label class="small">Sort by
+          <select id="sortBy">
+            <option value="relevance">Relevance</option>
+            <option value="price-asc">Price: Low → High</option>
+            <option value="price-desc">Price: High → Low</option>
+            <option value="newest">Newest</option>
+          </select>
+        </label>
+
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" onclick="applyFilters()">Apply</button>
+          <button class="btn ghost" onclick="resetFilters()">Reset</button>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <h4>Favorites</h4>
+        <div id="favList" class="muted small">No favorites yet</div>
+      </div>
+
+      <div class="hero-card">
+        <h4>Contact Agent</h4>
+        <div class="small muted">Have questions? Fill in details & we'll connect you to a local agent.</div>
+        <div style="margin-top:8px">
+          <input id="contactName" placeholder="Your name" />
+          <input id="contactPhone" placeholder="Phone / WhatsApp" style="margin-top:8px" />
+          <textarea id="contactMsg" placeholder="Message" style="margin-top:8px"></textarea>
+          <button class="btn" style="margin-top:8px" onclick="sendContact()">Send</button>
+        </div>
+      </div>
+
+    </aside>
+
+    <section class="content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3>Listings</h3>
+        <div class="muted small">Showing <span id="count">0</span> properties</div>
+      </div>
+
+      <div class="card-grid" id="listings"></div>
+
+      <div style="margin-top:18px;display:flex;justify-content:center">
+        <button class="btn ghost" onclick="loadMore()">Load more</button>
+      </div>
+    </section>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer>
+  <div style="max-width:900px;margin:0 auto">
+    ©️ <span id="yr"></span> RealEstateX — Demo • No backend. Pure client-side prototype.
+  </div>
+</footer>
+
+<!-- Modal backdrop -->
+<div id="backdrop" class="modal-backdrop" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- Templates (hidden) -->
+<template id="propertyTemplate">
+  <div class="card">
+    <div class="thumb"></div>
+    <div>
+      <div class="hgroup">
+        <div>
+          <div style="font-weight:700" class="title"></div>
+          <div class="meta small"></div>
+        </div>
+        <div style="text-align:right">
+          <div class="price"></div>
+          <div class="small muted">per month</div>
+        </div>
+      </div>
+
+      <div class="row small muted" style="margin-top:8px">
+        <div class="pill beds"></div>
+        <div class="pill baths"></div>
+        <div class="pill area"></div>
+        <button class="fav small" title="Save/Remove favorite">♡</button>
+      </div>
+
+      <div class="property-actions">
+        <button class="btn" onclick="viewDetail(event)">View</button>
+        <button class="btn ghost" onclick="startBooking(event)">Book Visit</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+/*
+  RealEstateX demo (client-side)
+  - Mock listings array
+  - localStorage used for users, favorites, bookings
+  - Basic search, filters, sort, favorites, profile modal
+*/
+
+// sample listings (in a real app these come from API)
+const LISTINGS = [
+  { id: 'p1', title: 'Modern 2BHK Apartment', city:'Mumbai', locality:'Lower Parel', price:25000, beds:2, baths:2, area:'900 sqft', type:'apartment', img:'https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=1200&auto=format&fit=crop&crop=faces' , instant:true, featured:true},
+  { id: 'p2', title: 'Cozy 1BHK Near Metro', city:'Delhi', locality:'Saket', price:12000, beds:1, baths:1, area:'450 sqft', type:'apartment', img:'https://images.unsplash.com/photo-1572120360610-d971b9a6a3b2?q=80&w=1200&auto=format&fit=crop&crop=faces', instant:true},
+  { id: 'p3', title: 'Family House with Garden', city:'Bengaluru', locality:'Koramangala', price:65000, beds:4, baths:3, area:'2200 sqft', type:'house', img:'https://images.unsplash.com/photo-1600607682622-9e3e8a1d2f1e?q=80&w=1200&auto=format&fit=crop&crop=faces', featured:true},
+  { id: 'p4', title: 'PG - All Female Dorm', city:'Pune', locality:'Kothrud', price:7000, beds:1, baths:1, area:'120 sqft', type:'pg', img:'https://images.unsplash.com/photo-1542317854-6e6f460d5f4b?q=80&w=1200&auto=format&fit=crop&crop=faces'},
+  { id: 'p5', title: 'Luxury Penthouse', city:'Mumbai', locality:'Bandra', price:155000, beds:5, baths:5, area:'4200 sqft', type:'apartment', img:'https://images.unsplash.com/photo-1505691723518-36a5bbad3e8b?q=80&w=1200&auto=format&fit=crop&crop=faces'},
+  { id: 'p6', title: 'Affordable Studio', city:'Delhi', locality:'Janakpuri', price:6500, beds:0, baths:1, area:'300 sqft', type:'apartment', img:'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1200&auto=format&fit=crop&crop=faces'},
+  { id: 'p7', title: 'Plot near City Outskirts', city:'Noida', locality:'Sector 150', price:4200000, beds:0, baths:0, area:'2400 sqft', type:'plot', img:'https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=1200&auto=format&fit=crop&crop=faces'}
+];
+
+let filtered = [...LISTINGS];
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+document.getElementById('globalSearch').addEventListener('keyup', (e) => {
+  if(e.key === 'Enter') applySearch();
+});
+
+// ----------------- AUTH (simple mock) -----------------
+function currentUser(){
+  return JSON.parse(localStorage.getItem('re_user') || 'null');
+}
+function requireAuth(action){
+  if(!currentUser()){
+    openAuthModal();
+    return false;
+  }
+  return true;
+}
+function updateAuthUI(){
+  const u = currentUser();
+  const btn = document.getElementById('authBtn');
+  const nav = document.getElementById('nav');
+  if(u){
+    btn.textContent = u.name;
+    btn.onclick = ()=> openModal('myProfile');
+  }else{
+    btn.textContent = 'Sign In';
+    btn.onclick = openAuthModal;
+  }
+}
+updateAuthUI();
+
+// sign in/up handlers
+function openAuthModal(){
+  const html = `
+    <div style="display:flex;gap:12px">
+      <div style="flex:1;padding-right:10px">
+        <h3>Sign In</h3>
+        <input id="siEmail" placeholder="Email" />
+        <input id="siPass" type="password" placeholder="Password" style="margin-top:8px" />
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn" onclick="signIn()">Sign In</button>
+          <button class="btn ghost" onclick="prefillDemo()">Demo account</button>
+        </div>
+        <div class="muted small" style="margin-top:8px">No backend — this uses localStorage for demo users.</div>
+      </div>
+      <div style="flex:1;padding-left:10px;border-left:1px dashed #e6e9ee">
+        <h3>Create account</h3>
+        <input id="suName" placeholder="Full name" />
+        <input id="suEmail" placeholder="Email" style="margin-top:8px" />
+        <input id="suPass" type="password" placeholder="Password" style="margin-top:8px" />
+        <div style="margin-top:8px"><button class="btn" onclick="signUp()">Sign Up</button></div>
+      </div>
+    </div>
+  `;
+  showModal(html);
+}
+
+function prefillDemo(){
+  document.getElementById('siEmail').value = 'demo@realx.test';
+  document.getElementById('siPass').value = 'demo123';
+  signIn();
+}
+
+function signUp(){
+  const name = document.getElementById('suName').value.trim();
+  const email = document.getElementById('suEmail').value.trim();
+  const pass = document.getElementById('suPass').value;
+  if(!name || !email || !pass){ alert('Please fill all'); return; }
+  const users = JSON.parse(localStorage.getItem('re_users') || '[]');
+  if(users.find(u=>u.email===email)){ alert('Account exists, please sign in'); return; }
+  const user = { id:'u'+Date.now(), name, email, pass, favorites:[], bookings:[] };
+  users.push(user);
+  localStorage.setItem('re_users', JSON.stringify(users));
+  localStorage.setItem('re_user', JSON.stringify(user));
+  updateAuthUI();
+  closeModal();
+  alert('Account created & signed in');
+}
+
+function signIn(){
+  const email = document.getElementById('siEmail')?.value?.trim();
+  const pass = document.getElementById('siPass')?.value;
+  const users = JSON.parse(localStorage.getItem('re_users') || '[]');
+  const user = users.find(u=>u.email===email && u.pass===pass) || (email==='demo@realx.test' && pass==='demo123' && {id:'demo',name:'Demo User',email:'demo@realx.test',favorites:[],bookings:[]});
+  if(!user){ alert('Invalid credentials'); return; }
+  localStorage.setItem('re_user', JSON.stringify(user));
+  updateAuthUI();
+  closeModal();
+  alert('Signed in as ' + user.name);
+}
+
+// sign out
+function signOut(){
+  localStorage.removeItem('re_user');
+  updateAuthUI();
+  closeModal();
+  alert('Signed out');
+}
+
+// ----------------- modal helpers -----------------
+function showModal(innerHtml){
+  const backdrop = document.getElementById('backdrop');
+  document.getElementById('modalContent').innerHTML = innerHtml;
+  backdrop.style.display = 'flex';
+}
+function closeModal(){
+  const b = document.getElementById('backdrop');
+  b.style.display = 'none';
+  document.getElementById('modalContent').innerHTML = '';
+}
+function openModal(name){
+  if(name==='myProfile') {
+    const u = currentUser();
+    const html = u ? `<div style="display:flex;gap:12px">
+      <div style="flex:1">
+        <h3>Profile — ${u.name}</h3>
+        <div class="muted small">Email: ${u.email}</div>
+        <div style="margin-top:12px">
+          <button class="btn" onclick="viewBookings()">My Bookings</button>
+          <button class="btn ghost" onclick="viewFavorites()">My Favorites</button>
+        </div>
+      </div>
+      <div style="flex:1;border-left:1px dashed #eee;padding-left:12px">
+        <h3>Account actions</h3>
+        <button class="btn" onclick="closeModal(); openAuthModal()">Switch account</button>
+        <div style="margin-top:8px"><button class="btn ghost" onclick="signOut()">Sign Out</button></div>
+      </div>
+    </div>` : `<div><h3>Not signed in</h3><p class="muted">Please sign in to manage profile, favorites and bookings.</p><div style="margin-top:8px"><button class="btn" onclick="openAuthModal()">Sign In</button></div></div>`;
+    showModal(html);
+  }
+}
+
+// ------------- LISTINGS rendering -------------
+const listingsRoot = document.getElementById('listings');
+const tmpl = document.getElementById('propertyTemplate');
+
+function renderListings(arr){
+  listingsRoot.innerHTML = '';
+  arr.forEach(p => {
+    const node = tmpl.content.cloneNode(true);
+    const card = node.querySelector('.card');
+    card.querySelector('.thumb').style.backgroundImage = `url(${p.img})`;
+    card.querySelector('.title').textContent = p.title;
+    card.querySelector('.meta').textContent = `${p.locality}, ${p.city}`;
+    card.querySelector('.price').textContent = '₹' + numberWithCommas(p.price);
+    card.querySelector('.beds').textContent = (p.beds ? p.beds+' bed' : 'Studio');
+    card.querySelector('.baths').textContent = (p.baths ? p.baths+' bath' : '');
+    card.querySelector('.area').textContent = p.area || '';
+    const favBtn = node.querySelector('.fav');
+    favBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      toggleFavorite(p.id);
+      updateFavUI();
+      renderListings(filtered);
+    });
+    // attach data-id for view & book handlers
+    node.querySelector('button.btn').dataset.id = p.id;
+    node.querySelector('button.btn').onclick = (e)=> viewDetail(e);
+    node.querySelectorAll('button.btn.ghost')[0].dataset.id = p.id;
+    node.querySelectorAll('button.btn.ghost')[0].onclick = (e)=> startBooking(e);
+    listingsRoot.appendChild(node);
+  });
+  document.getElementById('count').textContent = arr.length;
+}
+renderListings(filtered);
+
+// utility
+function numberWithCommas(x){
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// filters & search
+const activeFilters = new Set();
+function toggleFilter(key){
+  if(activeFilters.has(key)) activeFilters.delete(key);
+  else activeFilters.add(key);
+  applySearch();
+}
+function applyQuick(key){
+  if(key==='nearby') document.getElementById('qCity').value = 'Nearby';
+  if(key==='budget-low') document.getElementById('qBudget').value = '15000';
+  if(key==='premium') document.getElementById('qBudget').value = '50000';
+  applySearch();
+}
+function applySearch(){
+  const city = document.getElementById('qCity').value.trim().toLowerCase();
+  const type = document.getElementById('qType').value;
+  const budget = parseInt(document.getElementById('qBudget').value) || Infinity;
+  filtered = LISTINGS.filter(p=>{
+    if(city && !(p.city.toLowerCase().includes(city) || p.locality.toLowerCase().includes(city))) return false;
+    if(type !== 'any' && type !== '' && p.type !== type) return false;
+    if(p.price > budget) return false;
+    // chips filters
+    if(activeFilters.has('1bhk') && p.beds !== 1) return false;
+    if(activeFilters.has('2bhk') && p.beds !== 2) return false;
+    if(activeFilters.has('furnished') && !p.furnished) return false;
+    if(activeFilters.has('parking') && !p.parking) return false;
+    if(activeFilters.has('pet') && !p.petFriendly) return false;
+    return true;
+  });
+  renderListings(filtered);
+}
+function applyFilters(){
+  const t = document.getElementById('fType').value;
+  const beds = document.getElementById('fBeds').value;
+  const baths = document.getElementById('fBaths').value;
+  const sort = document.getElementById('sortBy').value;
+  let arr = [...LISTINGS];
+  if(t) arr = arr.filter(x=>x.type===t);
+  if(beds) arr = arr.filter(x=>x.beds == beds);
+  if(baths) arr = arr.filter(x=>x.baths == baths);
+  if(sort==='price-asc') arr.sort((a,b)=>a.price-b.price);
+  if(sort==='price-desc') arr.sort((a,b)=>b.price-a.price);
+  if(sort==='newest') arr.sort((a,b)=>b.id.localeCompare(a.id));
+  filtered = arr;
+  renderListings(filtered);
+}
+function resetFilters(){
+  document.getElementById('fType').value = '';
+  document.getElementById('fBeds').value = '';
+  document.getElementById('fBaths').value = '';
+  document.getElementById('sortBy').value = 'relevance';
+  filtered = [...LISTINGS];
+  renderListings(filtered);
+}
+function loadMore(){
+  alert('Demo: would fetch more results from server in a real app.');
+}
+
+// ------------- favorites --------------
+function getFavorites(){
+  const u = currentUser();
+  if(!u) return JSON.parse(localStorage.getItem('re_favs') || '[]');
+  // prefer user object favorites if present
+  const users = JSON.parse(localStorage.getItem('re_users') || '[]');
+  const uu = users.find(x=>x.email===u.email) || u;
+  return uu.favorites || [];
+}
+function toggleFavorite(id){
+  const u = currentUser();
+  if(!u){
+    // store in global guest favorites
+    const arr = getFavorites();
+    const idx = arr.indexOf(id);
+    if(idx>=0) { arr.splice(idx,1); } else { arr.push(id); }
+    localStorage.setItem('re_favs', JSON.stringify(arr));
+    alert('Saved to favorites (guest). Sign up to keep across devices.');
+    return;
+  }
+  // update user in users array
+  const users = JSON.parse(localStorage.getItem('re_users') || '[]');
+  const uu = users.find(x=>x.email===u.email) || u;
+  if(!uu.favorites) uu.favorites = [];
+  const idx = uu.favorites.indexOf(id);
+  if(idx>=0) uu.favorites.splice(idx,1);
+  else uu.favorites.push(id);
+  // persist
+  const filteredUsers = users.filter(x=>x.email!==uu.email).concat(uu);
+  localStorage.setItem('re_users', JSON.stringify(filteredUsers));
+  localStorage.setItem('re_user', JSON.stringify(uu));
+  alert('Favorites updated');
+}
+function updateFavUI(){
+  const favDiv = document.getElementById('favList');
+  const favs = getFavorites();
+  if(!favs.length){ favDiv.textContent = 'No favorites yet'; return; }
+  favDiv.innerHTML = favs.map(id => {
+    const p = LISTINGS.find(x=>x.id===id);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div><strong>${p?.title || id}</strong><div class="muted small">${p?.locality||''}, ${p?.city||''}</div></div>
+      <div><button class="btn ghost small" onclick="event.stopPropagation(); removeFav('${id}')">Remove</button></div>
+    </div>`;
+  }).join('');
+}
+function removeFav(id){
+  const u = currentUser();
+  if(!u){
+    const arr = getFavorites().filter(x=>x!==id);
+    localStorage.setItem('re_favs', JSON.stringify(arr));
+    updateFavUI(); renderListings(filtered);
+    return;
+  }
+  const users = JSON.parse(localStorage.getItem('re_users') || '[]');
+  const uu = users.find(x=>x.email===u.email) || u;
+  uu.favorites = (uu.favorites || []).filter(x=>x!==id);
+  const newUsers = users.filter(x=>x.email!==uu.email).concat(uu);
+  localStorage.setItem('re_users', JSON.stringify(newUsers));
+  localStorage.setItem('re_user', JSON.stringify(uu));
+  updateFavUI(); renderListings(filtered);
+}
+updateFavUI();
+
+// ------------- view detail & booking -------------
+function viewDetail(e){
+  const id = e.currentTarget.dataset.id;
+  const p = LISTINGS.find(x=>x.id===id);
+  if(!p) return;
+  const html = `
+    <div style="display:flex;gap:12px">
+      <div style="flex:1">
+        <div style="height:320px;background-image:url(${p.img});background-size:cover;background-position:center;border-radius:10px"></div>
+        <h2 style="margin-top:12px">${p.title} <span class="badge">${p.type}</span></h2>
+        <div class="muted">${p.locality}, ${p.city}</div>
+        <div style="margin-top:12px">${p.description || 'Lovely property with modern amenities.'}</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <div class="pill">₹ ${numberWithCommas(p.price)}</div>
+          <div class="pill">${p.beds ? p.beds+' bed' : 'Studio'}</div>
+          <div class="pill">${p.area}</div>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn" onclick="bookProperty('${p.id}')">Book Visit</button>
+          <button class="btn ghost" onclick="toggleFavorite('${p.id}'); updateFavUI();">Save</button>
+        </div>
+      </div>
+      <div style="width:360px">
+        <h4>Map</h4>
+        <div class="map">Map placeholder for ${p.locality}</div>
+        <h4 style="margin-top:12px">Agent</h4>
+        <div class="hero-card small">
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="width:56px;height:56px;border-radius:50%;background:#e9eef6"></div>
+            <div>
+              <div style="font-weight:700">Agent: Priya Verma</div>
+              <div class="muted small">+91 98765 43210</div>
+            </div>
+          </div>
+          <div style="margin-top:8px">
+            <button class="btn" onclick="contactAgent('${p.id}')">Contact agent</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  showModal(html);
+}
+
+function startBooking(e){
+  e.stopPropagation();
+  const id = e.currentTarget.dataset.id;
+  if(!requireAuth()) return;
+  const p = LISTINGS.find(x=>x.id===id);
+  const html = `
+    <h3>Book visit — ${p.title}</h3>
+    <div style="display:flex;gap:8px">
+      <div style="flex:1">
+        <label>Name<input id="bkName" value="${currentUser().name}" /></label>
+        <label style="margin-top:8px">Phone<input id="bkPhone" /></label>
+        <label style="margin-top:8px">Date & time<input id="bkWhen" type="datetime-local" /></label>
+        <div style="margin-top:8px"><button class="btn" onclick="confirmBooking('${p.id}')">Confirm</button></div>
+      </div>
+      <div style="width:320px">
+        <h4>Details</h4>
+        <div class="muted">Price: ₹${numberWithCommas(p.price)}</div>
+        <div class="muted" style="margin-top:8px">Agent: demo agent</div>
+      </div>
+    </div>
+  `;
+  showModal(html);
+}
+
+function bookProperty(id){
+  if(!requireAuth()) return;
+  // open booking modal prefilled
+  startBooking({ currentTarget: { dataset: { id } }, stopPropagation: ()=>{} });
+}
+
+function confirmBooking(id){
+  const name = document.getElementById('bkName').value;
+  const phone = document.getElementById('bkPhone').value;
+  const when = document.getElementById('bkWhen').value;
+  if(!name || !phone || !when){ alert('Please fill the booking form'); return; }
+  const user = currentUser();
+  const users = JSON.parse(localStorage.getItem('re_users') || '[]');
+  const uu = users.find(x=>x.email===user.email) || user;
+  if(!uu.bookings) uu.bookings = [];
+  uu.bookings.push({ id: 'b'+Date.now(), property:id, name, phone, when });
+  const newUsers = users.filter(x=>x.email!==uu.email).concat(uu);
+  localStorage.setItem('re_users', JSON.stringify(newUsers));
+  localStorage.setItem('re_user', JSON.stringify(uu));
+  closeModal();
+  alert('Booking confirmed — agent will contact you.');
+}
+
+// show bookings
+function viewBookings(){
+  const u = currentUser();
+  if(!u || !(u.bookings || []).length) { showModal('<div><h3>No bookings</h3><p class="muted">You have no upcoming bookings.</p></div>'); return; }
+  const html = `<div><h3>My Bookings</h3>${(u.bookings||[]).map(b => {
+    const p = LISTINGS.find(x=>x.id===b.property);
+    return `<div style="border-bottom:1px dashed #eee;padding:8px 0">
+      <div style="display:flex;justify-content:space-between"><strong>${p?.title || b.property}</strong><div class="muted">${b.when}</div></div>
+      <div class="muted small">Contact: ${b.phone}</div>
+    </div>`;
+  }).join('')}</div>`;
+  showModal(html);
+}
+function viewFavorites(){
+  const favs = getFavorites();
+  if(!favs.length){ showModal('<div><h3>No favorites</h3><p class="muted">Save properties you like to view them here.</p></div>'); return; }
+  const html = `<div><h3>Favorites</h3>${favs.map(id=>{
+    const p = LISTINGS.find(x=>x.id===id);
+    return `<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px dashed #eee">
+      <div style="width:68px;height:48px;background-image:url(${p?.img});background-size:cover;border-radius:8px"></div>
+      <div>
+        <strong>${p?.title}</strong><div class="muted small">${p?.locality}, ${p?.city}</div>
+        <div style="margin-top:8px"><button class="btn" onclick="viewDetailInline('${id}')">View</button></div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+  showModal(html);
+}
+function viewDetailInline(id){
+  closeModal();
+  const p = LISTINGS.find(x=>x.id===id);
+  if(p) viewDetail({ currentTarget: { dataset: { id } }, stopPropagation: ()=>{} });
+}
+
+// contact agent
+function contactAgent(pid){
+  const html = `<h3>Contact agent</h3>
+    <div><input id="caName" placeholder="Your name" /><input id="caPhone" placeholder="Phone" style="margin-top:8px" /><textarea id="caMsg" placeholder="Message" style="margin-top:8px"></textarea>
+    <div style="margin-top:8px"><button class="btn" onclick="sendAgent('${pid}')">Send</button></div></div>`;
+  showModal(html);
+}
+function sendAgent(pid){
+  const name = document.getElementById('caName').value;
+  const phone = document.getElementById('caPhone').value;
+  if(!name||!phone){ alert('Fill details'); return; }
+  closeModal();
+  alert('Message sent. Agent will reach you shortly (demo).');
+}
+
+// contact form in sidebar
+function sendContact(){
+  const name = document.getElementById('contactName').value;
+  const phone = document.getElementById('contactPhone').value;
+  const msg = document.getElementById('contactMsg').value;
+  if(!name || !phone) { alert('Please enter name & phone'); return; }
+  alert('Thanks ' + name + '. An agent will contact you (demo).');
+}
+
+// small helpers
+function showListings(scope){
+  filtered = LISTINGS;
+  renderListings(filtered);
+  window.scrollTo({ top: 200, behavior:'smooth' });
+}
+
+// init
+updateFavUI();
+renderListings(filtered);
+
+</script>
+</body>
+</html>
