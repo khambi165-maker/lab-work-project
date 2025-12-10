@@ -1,0 +1,40 @@
+// Array of quiz questions
+const quizQuestions = [
+    { question: "What is the capital of India?", answer: "delhi" },
+    { question: "Who is known as the father of computers?", answer: "charles babbage" },
+    { question: "What does HTML stand for?", answer: "hypertext markup language" },
+    { question: "Which planet is known as the Red Planet?", answer: "mars" },
+    { question: "What is the value of PI (approx)?", answer: "3.14" }
+];
+
+// Function to run the quiz
+function runQuiz() {
+    let score = 0;  // Track score
+
+    for (let i = 0; i < quizQuestions.length; i++) {
+        let userAnswer = prompt(quizQuestions[i].question);
+
+        // Handle null (cancel in prompt)
+        if (userAnswer === null) {
+            alert("You cancelled! Moving to next question.");
+            continue;
+        }
+
+        // Normalize input
+        userAnswer = userAnswer.toLowerCase().trim();
+
+        // Check answer
+        if (userAnswer === quizQuestions[i].answer) {
+            score++;
+            alert("Correct! 🎉");
+        } else {
+            alert(`Wrong ❌. Correct answer is: ${quizQuestions[i].answer}`);
+        }
+    }
+
+    // Final score
+    alert(`Quiz Completed! 🎯 Your Score: ${score}/${quizQuestions.length}`);
+}
+
+// Run the quiz
+runQuiz();
